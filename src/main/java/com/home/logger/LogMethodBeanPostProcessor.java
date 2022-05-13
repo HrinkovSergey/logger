@@ -16,16 +16,45 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+/**
+ * BeanPostProcessor that allow to log methods in application
+ *
+ * @author Siarhei Hrynkou
+ *
+ */
 @Slf4j
 @Component
 public class LogMethodBeanPostProcessor implements BeanPostProcessor {
+    /**
+     * class and method logging message
+     */
     private static final String LOG_METHOD_STRING = "***** Class: {}, method: {}";
+    /**
+     * args logging message
+     */
     private static final String LOG_ARG_STRING = "***** arg: {}";
+    /**
+     * return value logging message
+     */
     private static final String LOG_RETURN_VALUE_STRING = "***** returned value: {}";
+    /**
+     * beans whose methods are marked with the {@link com.home.logger.annotation.LogMethod @LogMethod} annotation
+     */
     @SuppressWarnings("rawtypes")
     private final Map<String, Class> mapBeans = new HashMap<>();
+    /**
+     * methods marked with {@link com.home.logger.annotation.LogMethod @LogMethod} annotation
+     */
     private final Map<String, List<Method>> mapMethods = new HashMap<>();
 
+    /**
+     * <p>Check the methods in the object for the presence of the {@link com.home.logger.annotation.LogMethod @LogMethod} annotation.
+     * If a method marked with an annotation is found, the bean and its method are stored in maps
+     * </p>
+     * @param bean checked object
+     * @param beanName object name
+     * @return the bean that was checked
+     */
     @Nullable
     @Override
     public Object postProcessBeforeInitialization(Object bean, String beanName) throws BeansException {
@@ -41,6 +70,13 @@ public class LogMethodBeanPostProcessor implements BeanPostProcessor {
         return bean;
     }
 
+    /**
+     * <p>Log the methods in the object for the presence of the {@link com.home.logger.annotation.LogMethod @LogMethod} annotation.
+     * </p>
+     * @param bean checked object
+     * @param beanName object name
+     * @return proxy of bean if it method marked {@link com.home.logger.annotation.LogMethod @LogMethod} annotation
+     */
     @SuppressWarnings("rawtypes")
     @Nullable
     @Override

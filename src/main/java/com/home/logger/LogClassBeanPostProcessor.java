@@ -12,15 +12,41 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * BeanPostProcessor that allow to log whole class in application
+ *
+ * @author Siarhei Hrynkou
+ *
+ */
 @Slf4j
 @Component
 public class LogClassBeanPostProcessor implements BeanPostProcessor {
+    /**
+     * class and method logging message
+     */
     private static final String LOG_METHOD_STRING = "***** Class: {}, method: {}";
+    /**
+     * args logging message
+     */
     private static final String LOG_ARG_STRING = "***** arg: {}";
+    /**
+     * return value logging message
+     */
     private static final String LOG_RETURN_VALUE_STRING = "***** returned value: {}";
+    /**
+     * beans are marked with the {@link com.home.logger.annotation.LogMethod @LogMethod} annotation
+     */
     @SuppressWarnings("rawtypes")
     private final Map<String, Class> map = new HashMap<>();
 
+    /**
+     * <p>Check the object for the presence of the {@link com.home.logger.annotation.LogMethod @LogMethod} annotation.
+     * If the bean marked with an annotation, the bean is stored in maps
+     * </p>
+     * @param bean checked object
+     * @param beanName object name
+     * @return the bean that was checked
+     */
     @Nullable
     @Override
     public Object postProcessBeforeInitialization(Object bean, String beanName) throws BeansException {
@@ -31,6 +57,13 @@ public class LogClassBeanPostProcessor implements BeanPostProcessor {
         return bean;
     }
 
+    /**
+     * <p>Log the methods in the object for the presence of the {@link com.home.logger.annotation.LogMethod @LogMethod} annotation.
+     * </p>
+     * @param bean checked object
+     * @param beanName object name
+     * @return proxy of bean if it method marked {@link com.home.logger.annotation.LogMethod @LogMethod} annotation
+     */
     @SuppressWarnings({"rawtypes"})
     @Nullable
     @Override
