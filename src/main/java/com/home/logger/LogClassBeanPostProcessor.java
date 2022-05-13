@@ -15,9 +15,9 @@ import java.util.Map;
 @Slf4j
 @Component
 public class LogClassBeanPostProcessor implements BeanPostProcessor {
-    private static final String LOG_METHOD_STRING = "    [Class: {}][method: {}]";
-    private static final String LOG_ARG_STRING = "      [arg: {}]";
-    private static final String LOG_RETURN_VALUE_STRING = "      [returned value: {}]";
+    private static final String LOG_METHOD_STRING = "***** Class: {}, method: {}";
+    private static final String LOG_ARG_STRING = "***** arg: {}";
+    private static final String LOG_RETURN_VALUE_STRING = "***** returned value: {}";
     @SuppressWarnings("rawtypes")
     private final Map<String, Class> map = new HashMap<>();
 
