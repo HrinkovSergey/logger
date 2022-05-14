@@ -8,4 +8,6 @@ import java.lang.annotation.RetentionPolicy;
  */
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Log {
+    boolean returnValue() default false;
+    boolean arguments() default false;
 }

@@ -14,6 +14,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
@@ -86,8 +87,9 @@ public class LogMethodBeanPostProcessor implements BeanPostProcessor {
         if (beanClass != null) {
             return Proxy
                     .newProxyInstance(beanClass.getClassLoader(), beanClass.getInterfaces(), (proxy, method, args) -> {
-                        if (isMethodAnnotated(methods, method)) {
-                            return logMethod(beanClass.getSimpleName(), method, args, bean);
+                        Optional<Method> originalMethod = getOriginalMethod(methods, method);
+                        if (originalMethod.isPresent()) {
+                            return logMethod(beanClass.getSimpleName(), originalMethod.get(), method, args, bean);
                         }
                         return method.invoke(bean, args);
                     });
@@ -95,17 +97,29 @@ public class LogMethodBeanPostProcessor implements BeanPostProcessor {
         return bean;
     }
 
-    private Object logMethod(String simpleName, Method method, Object[] args, Object bean) throws InvocationTargetException, IllegalAccessException {
+    private Object logMethod(String simpleName,Method originalMethod, Method method, Object[] args, Object bean) throws InvocationTargetException, IllegalAccessException {
         log.info(LOG_METHOD_STRING, simpleName, method.getName());
-        Arrays.stream(args).forEach(arg -> log.debug(LOG_ARG_STRING, arg));
+        LogMethod annotation = originalMethod.getAnnotation(LogMethod.class);
+        if (annotation.arguments()) {
+            Arrays.stream(args)
+                    .forEach(arg -> log.debug(LOG_ARG_STRING, arg));
+        }
+
         Object returnValue = method.invoke(bean, args);
-        log.debug(LOG_RETURN_VALUE_STRING, returnValue);
+
+        if (annotation.returnValue()) {
+            log.debug(LOG_RETURN_VALUE_STRING, returnValue);
+        }
         return returnValue;
     }
 
-    private boolean isMethodAnnotated(List<Method> methods, Method method) {
-        return methods.stream()
-                .anyMatch(method1 -> method1.getReturnType().equals(method.getReturnType())
-                                     && Arrays.equals(method1.getParameterTypes(), method.getParameterTypes()));
+    private Optional<Method> getOriginalMethod(List<Method> methods, Method method) {
+        for (Method originalMethod : methods) {
+            if (originalMethod.getReturnType().equals(method.getReturnType())
+                    && Arrays.equals(originalMethod.getParameterTypes(), method.getParameterTypes())) {
+                return Optional.of(originalMethod);
+            }
+        }
+        return Optional.empty();
     }
 }

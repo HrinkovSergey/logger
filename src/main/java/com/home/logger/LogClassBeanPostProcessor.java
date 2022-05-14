@@ -64,7 +64,7 @@ public class LogClassBeanPostProcessor implements BeanPostProcessor {
      * @param beanName object name
      * @return proxy of bean if it method marked {@link com.home.logger.annotation.LogMethod @LogMethod} annotation
      */
-    @SuppressWarnings({"rawtypes"})
+    @SuppressWarnings({"rawtypes", "unchecked"})
     @Nullable
     @Override
     public Object postProcessAfterInitialization(Object bean, String beanName) throws BeansException {
@@ -73,9 +73,17 @@ public class LogClassBeanPostProcessor implements BeanPostProcessor {
             return Proxy
                     .newProxyInstance(beanClass.getClassLoader(), beanClass.getInterfaces(), (proxy, method, args) -> {
                         log.info(LOG_METHOD_STRING, beanClass.getSimpleName(), method.getName());
-                        Arrays.stream(args).forEach(arg -> log.debug(LOG_ARG_STRING, arg));
+                        Log annotation = (Log) beanClass.getAnnotation(Log.class);
+                        if (annotation.arguments()) {
+                            Arrays.stream(args)
+                                    .forEach(arg -> log.debug(LOG_ARG_STRING, arg));
+                        }
+
                         Object returnValue = method.invoke(bean, args);
-                        log.debug(LOG_RETURN_VALUE_STRING, returnValue);
+
+                        if (annotation.returnValue()) {
+                            log.debug(LOG_RETURN_VALUE_STRING, returnValue);
+                        }
                         return returnValue;
                     });
         }
