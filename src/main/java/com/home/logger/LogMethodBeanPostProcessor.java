@@ -81,7 +81,7 @@ public class LogMethodBeanPostProcessor implements BeanPostProcessor {
     @SuppressWarnings("rawtypes")
     @Nullable
     @Override
-    public Object postProcessAfterInitialization(Object bean, String beanName) throws BeansException {
+    public Object postProcessAfterInitialization(Object bean, String beanName) {
         Class beanClass = mapBeans.get(beanName);
         List<Method> methods = mapMethods.get(beanName);
         if (beanClass != null) {
@@ -97,7 +97,14 @@ public class LogMethodBeanPostProcessor implements BeanPostProcessor {
         return bean;
     }
 
-    private Object logMethod(String simpleName,Method originalMethod, Method method, Object[] args, Object bean) throws InvocationTargetException, IllegalAccessException {
+    private Optional<Method> getOriginalMethod(List<Method> methods, Method method) {
+        return methods.stream()
+                .filter(originalMethod -> originalMethod.getReturnType().equals(method.getReturnType())
+                        && Arrays.equals(originalMethod.getParameterTypes(), method.getParameterTypes()))
+                .findAny();
+    }
+
+    private Object logMethod(String simpleName,Method originalMethod, Method method, Object[] args, Object bean) throws Throwable {
         log.info(LOG_METHOD_STRING, simpleName, method.getName());
         LogMethod annotation = originalMethod.getAnnotation(LogMethod.class);
         if (annotation.arguments()) {
@@ -105,7 +112,7 @@ public class LogMethodBeanPostProcessor implements BeanPostProcessor {
                     .forEach(arg -> log.debug(LOG_ARG_STRING, arg));
         }
 
-        Object returnValue = method.invoke(bean, args);
+        Object returnValue = executeMethod(method, bean, args);
 
         if (annotation.returnValue()) {
             log.debug(LOG_RETURN_VALUE_STRING, returnValue);
@@ -113,13 +120,11 @@ public class LogMethodBeanPostProcessor implements BeanPostProcessor {
         return returnValue;
     }
 
-    private Optional<Method> getOriginalMethod(List<Method> methods, Method method) {
-        for (Method originalMethod : methods) {
-            if (originalMethod.getReturnType().equals(method.getReturnType())
-                    && Arrays.equals(originalMethod.getParameterTypes(), method.getParameterTypes())) {
-                return Optional.of(originalMethod);
-            }
+    private Object executeMethod(Method method, Object bean, Object[] args) throws Throwable {
+        try {
+            return method.invoke(bean, args);
+        } catch (InvocationTargetException exception) {
+            throw exception.getTargetException();
         }
-        return Optional.empty();
     }
 }

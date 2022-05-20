@@ -7,6 +7,8 @@ import org.springframework.beans.factory.config.BeanPostProcessor;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Component;
 
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -79,7 +81,7 @@ public class LogClassBeanPostProcessor implements BeanPostProcessor {
                                     .forEach(arg -> log.debug(LOG_ARG_STRING, arg));
                         }
 
-                        Object returnValue = method.invoke(bean, args);
+                        Object returnValue = executeMethod(method, bean, args);
 
                         if (annotation.returnValue()) {
                             log.debug(LOG_RETURN_VALUE_STRING, returnValue);
@@ -88,5 +90,13 @@ public class LogClassBeanPostProcessor implements BeanPostProcessor {
                     });
         }
         return bean;
+    }
+
+    private Object executeMethod(Method method, Object bean, Object[] args) throws Throwable {
+        try {
+           return method.invoke(bean, args);
+        } catch (InvocationTargetException exception) {
+            throw exception.getTargetException();
+        }
     }
 }
